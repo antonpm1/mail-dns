@@ -6,12 +6,12 @@ import urllib2
 import json
 import logging
 
-domain = 	<--- Replace with yours
+domain =        <--- Replace with yours
 url = "https://www.cloudflare.com/api_json.html"
-key = 		<--- Replace with yours
-email = 	<--- Replace with yours
-zone = 		<--- Replace with yours
-record = 	<--- Replace with yours
+key =           <--- Replace with yours
+email =         <--- Replace with yours
+zone =          <--- Replace with yours
+record =        <--- Replace with yours
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
@@ -24,7 +24,13 @@ logger = logging.getLogger()
 def getCurrentIP():
     myResolver = dns.resolver.Resolver()
     myResolver.nameservers = ['216.146.35.35', '216.146.35.36']
-    myAnswers = myResolver.query(domain, "A")
+
+    try:
+    	myAnswers = myResolver.query(domain, "A")
+    except SyntaxError:
+	logger.error('DNS Syntax Error')
+    except Timeout:
+	logger.error('DNS lookup timed out')
 
     for rdata in myAnswers:
 	if rdata != 0:
@@ -38,11 +44,11 @@ def getDetail(record, field):
     try:
         response = urllib2.urlopen(req)
     except urllib2.HTTPError, e:
-        logger.error('Received HTTPError retrieving ' + field +':' + str(e.code))
+        logger.error('Received HTTPError retrieving ' + field +' :' + str(e.code))
     except urllib2.URLError, e:
-        logger.error('Received URLError retrieving record ID  ' + field + ':' + str(e.reason))
+        logger.error('Received URLError retrieving record ID  ' + field + ' :' + str(e.reason))
     except httplib.HTTPException, e:
-        logger.error('Received HTTPException retrieving ' + field)
+        logger.error('Received HTTPException retrieving record ID')
 
     dump = json.load(response)
 
