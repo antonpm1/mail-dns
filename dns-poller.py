@@ -38,9 +38,9 @@ def getDetail(record, field):
     try:
         response = urllib2.urlopen(req)
     except urllib2.HTTPError, e:
-        logger.error('Received HTTPError retrieving ' + field +' :' + str(e.code))
+        logger.error('Received HTTPError retrieving ' + field +':' + str(e.code))
     except urllib2.URLError, e:
-        logger.error('Received URLError retrieving record ID  ' + field + ' :' + str(e.reason))
+        logger.error('Received URLError retrieving record ID  ' + field + ':' + str(e.reason))
     except httplib.HTTPException, e:
         logger.error('Received HTTPException retrieving record ID')
 
