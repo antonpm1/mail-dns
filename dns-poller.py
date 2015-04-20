@@ -42,7 +42,7 @@ def getDetail(record, field):
     except urllib2.URLError, e:
         logger.error('Received URLError retrieving record ID  ' + field + ':' + str(e.reason))
     except httplib.HTTPException, e:
-        logger.error('Received HTTPException retrieving record ID')
+        logger.error('Received HTTPException retrieving ' + field)
 
     dump = json.load(response)
 
