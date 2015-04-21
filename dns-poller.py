@@ -27,14 +27,15 @@ def getCurrentIP():
 
     try:
     	myAnswers = myResolver.query(domain, "A")
-    except SyntaxError:
-	logger.error('DNS Syntax Error')
-    except Timeout:
+    except dns.resolver.Timeout:
 	logger.error('DNS lookup timed out')
 
-    for rdata in myAnswers:
-	if rdata != 0:
-            return rdata
+    try:
+	for rdata in myAnswers:
+	    if rdata != 0:
+                return rdata
+    except UnboundLocalError:
+	logger.error('Unable complete DNS lookup, assuming no internet connection available')
 
 def getDetail(record, field):
     query_args = { 'a':'rec_load_all', 'tkn':key, 'email':email, 'z':zone }
@@ -50,11 +51,14 @@ def getDetail(record, field):
     except httplib.HTTPException, e:
         logger.error('Received HTTPException retrieving record ID')
 
-    dump = json.load(response)
-
-    for line in dump['response']['recs']['objs']:
-        if line.get('name') == record and line.get('type') == 'A':
-            return line.get(field)
+    try:
+        dump = json.load(response)
+	for line in dump['response']['recs']['objs']:
+            if line.get('name') == record and line.get('type') == 'A':
+                return line.get(field)
+    except UnboundLocalError:
+	 logger.error('Unable complete Cloudflare DNS API lookup, assuming no internet connection available')
+         return None
 
 def ipUpdate(newIP):
     record_id = getDetail(record, 'rec_id')
@@ -71,12 +75,15 @@ def ipUpdate(newIP):
     except httplib.HTTPException, e:
     	logger.error('Received HTTPException when updating IP')	
 
-    dump = json.load(response)
-
-    if dump.get('result') != "success":
-	logger.error("Failed to apply update: " + dump.get('msg'))
-    else:
-	logger.info("Changed IP to: " + str(newIP))
+    try:
+    	dump = json.load(response)
+    	if dump.get('result') != "success":
+	    logger.error("Failed to apply update: " + dump.get('msg'))
+        else:
+	    logger.info("Changed IP for " + record + " to: " + str(newIP))
+    except UnboundLocalError:
+         logger.error('Unable complete Cloudflare DNS API Update, assuming no internet connection available')
+         return None
 
 def ipPoller():    
     while True:
@@ -85,10 +92,10 @@ def ipPoller():
  	ip2 = getDetail(record, 'content')
    
         if str(ip1) != str(ip2):
-	    logger.info('New IP detected: '+ str(ip1))
+	    logger.info("New IP for " + record + " detected: "+ str(ip1))
 	    ipUpdate(ip1)
 
-        logger.info('IP Address has not changed')
+        logger.info("IP Address for " + record + " has not changed")
 
  	time.sleep( 10 )
 
