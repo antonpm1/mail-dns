@@ -57,8 +57,8 @@ def getDetail(record, field):
             if line.get('name') == record and line.get('type') == 'A':
                 return line.get(field)
     except UnboundLocalError:
-	 logger.error('Unable complete Cloudflare DNS API lookup, assuming no internet connection available')
-         return None
+	logger.error('Unable complete Cloudflare DNS API lookup, assuming no internet connection available')
+	return None
 
 def ipUpdate(newIP):
     record_id = getDetail(record, 'rec_id')
@@ -82,8 +82,8 @@ def ipUpdate(newIP):
         else:
 	    logger.info("Changed IP for " + record + " to: " + str(newIP))
     except UnboundLocalError:
-         logger.error('Unable complete Cloudflare DNS API Update, assuming no internet connection available')
-         return None
+	logger.error('Unable complete Cloudflare DNS API Update, assuming no internet connection available')
+	return None	
 
 def ipPoller():    
     while True:
@@ -94,8 +94,8 @@ def ipPoller():
         if str(ip1) != str(ip2):
 	    logger.info("New IP for " + record + " detected: "+ str(ip1))
 	    ipUpdate(ip1)
-
-        logger.info("IP Address for " + record + " has not changed")
+        else:
+            logger.info("IP Address for " + record + " has not changed")
 
  	time.sleep( 10 )
 
