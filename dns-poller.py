@@ -22,7 +22,7 @@ logging.basicConfig(level=logging.DEBUG,
 logger = logging.getLogger()
 
 def getCurrentIP():
-    myResolver = dns.resolver.Resolver()
+    myResolver = dns.resolver.Resolver(configure=False)
     myResolver.nameservers = ['216.146.35.35', '216.146.35.36']
 
     try:
@@ -35,7 +35,7 @@ def getCurrentIP():
 	    if rdata != 0:
                 return rdata
     except UnboundLocalError:
-	logger.error('Unable complete DNS lookup, assuming no internet connection available')
+	logger.error('Unable to complete DNS lookup, see Error above')
 
 def getDetail(record, field):
     query_args = { 'a':'rec_load_all', 'tkn':key, 'email':email, 'z':zone }
@@ -57,7 +57,7 @@ def getDetail(record, field):
             if line.get('name') == record and line.get('type') == 'A':
                 return line.get(field)
     except UnboundLocalError:
-	logger.error('Unable complete Cloudflare DNS API lookup, assuming no internet connection available')
+	logger.error('Unable to complete Cloudflare DNS API lookup, see Error above')
 	return None
 
 def ipUpdate(newIP):
@@ -77,12 +77,15 @@ def ipUpdate(newIP):
 
     try:
     	dump = json.load(response)
-    	if dump.get('result') != "success":
-	    logger.error("Failed to apply update: " + dump.get('msg'))
-        else:
-	    logger.info("Changed IP for " + record + " to: " + str(newIP))
+        try:
+    	    if dump.get('result') != "success":
+	        logger.error("Failed to apply update: " + dump.get('msg'))
+            else:
+	        logger.info("Changed IP for " + record + " to: " + str(newIP))
+	except KeyError:
+	    logger.debug("KeyError detected, see this: " + dump)
     except UnboundLocalError:
-	logger.error('Unable complete Cloudflare DNS API Update, assuming no internet connection available')
+	logger.error('Unable to complete Cloudflare DNS API Update, see Error above')
 	return None	
 
 def ipPoller():    
@@ -91,7 +94,9 @@ def ipPoller():
  
  	ip2 = getDetail(record, 'content')
    
-        if str(ip1) != str(ip2):
+	if ip2 == None:
+	    logger.warn("Cloudflare DNS record not retrieved")
+        elif str(ip1) != str(ip2):
 	    logger.info("New IP for " + record + " detected: "+ str(ip1))
 	    ipUpdate(ip1)
         else:
