@@ -48,14 +48,17 @@ def getDetail(record, field):
         logger.error('Received HTTPError retrieving ' + field +' :' + str(e.code))
     except urllib2.URLError, e:
         logger.error('Received URLError retrieving record ID  ' + field + ' :' + str(e.reason))
-    except httplib.HTTPException, e:
+    except urllib2.HTTPException, e:
         logger.error('Received HTTPException retrieving record ID')
 
     try:
         dump = json.load(response)
-	for line in dump['response']['recs']['objs']:
-            if line.get('name') == record and line.get('type') == 'A':
-                return line.get(field)
+	try:
+	    for line in dump['response']['recs']['objs']:
+                if line.get('name') == record and line.get('type') == 'A':
+                    return line.get(field)
+	except KeyError:
+            logger.debug("KeyError detected, see this: " + dump) 
     except UnboundLocalError:
 	logger.error('Unable to complete Cloudflare DNS API lookup, see Error above')
 	return None
@@ -72,7 +75,7 @@ def ipUpdate(newIP):
         logger.error('Received HTTPError when updating IP: ' + str(e.code))
     except urllib2.URLError, e:
     	logger.error('Received URLError when updating IP: ' + str(e.reason))
-    except httplib.HTTPException, e:
+    except urllib2.HTTPException, e:
     	logger.error('Received HTTPException when updating IP')	
 
     try:
